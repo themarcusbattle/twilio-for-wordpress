@@ -124,7 +124,6 @@ add_action( 'init', 'twilio_page_save_settings' );
 /**
 *
 */
-
 function twilio_user_contactmethods( $user_contact ) {
 
 	$user_contact['mobile'] = __('Mobile'); 
@@ -133,5 +132,22 @@ function twilio_user_contactmethods( $user_contact ) {
 }
 
 add_filter('user_contactmethods', 'twilio_user_contactmethods');
+
+
+/**
+*
+* @since 0.1.0
+*/
+function twilio_admin_scripts() {
+
+	echo plugins_url( '/assets/js/ace/lib/ace/ace.js', __FILE__ );
+
+	wp_register_script( 'ace-editor', plugins_url( '/assets/js/ace/lib/ace/ace.js', __FILE__ ), '', '', true );
+	wp_enqueue_script( 'ace-editor' );
+
+}
+
+add_action( 'admin_enqueue_scripts', 'twilio_admin_scripts' );
+
 
 ?>
