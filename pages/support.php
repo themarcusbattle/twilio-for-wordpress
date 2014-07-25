@@ -16,7 +16,7 @@
 		<a href="?page=twilio-api" class="nav-tab">API</a>
 		<a href="?page=twilio-support" class="nav-tab nav-tab-active">Support</a>
 	</h2>
-	<p>If you have any questions or concerns, feel free to email them to <a href="mailto:marcus@marcusbattle.com">marcus@marcusbattle.com</a></p>
+	<p>If you have any questions or concerns, tweet me <a href="https://twitter.com/marcusdbattle" target="blank">@MarcusDBattle</a> or send an email to <a href="mailto:marcus@marcusbattle.com">marcus@marcusbattle.com</a></p>
 
 	<hr />
 	<p>Plugin created by <a href="http://marcusbattle.com/plugins/twilio-for-wordpress" target="_blank">Marcus Battle</a>. This plugin is not directly affiliated with <a href="https://twilio.com" target="_blank">Twilio, Inc.</a></p>
