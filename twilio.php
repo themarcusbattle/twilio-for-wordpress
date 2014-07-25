@@ -173,10 +173,7 @@ function twilio_callbacks() {
 	$uri['path'] = str_replace( home_url( '', 'relative' ) , '', $uri['path'] );
 	$uri['path'] = trailingslashit( $uri['path'] );
 
-	$uri['query'] = isset($uri['query']) ? $uri['query'] : '';
-
-	// Parse the query parameters
-	parse_str( $uri['query'], $sms );
+	$sms = $_REQUEST;
 
 	// Callback for Twilio SMS
 	if ( $uri['path'] == '/twilio/sms/' ) {
@@ -234,12 +231,12 @@ add_filter( 'twilio_sms_callback', 'twilio_sms_callback', 99, 2 );
 */
 function twilio_sms_callback_demo( $twixml, $sms ) {
 
-	if ( strtolower($sms['Body']) == 'demo' ) {
+	if ( strcasecmp( $sms['Body'], 'demo' ) == 0 ) {
 
 		$site_name = get_bloginfo('name');
 		$site_url = home_url();
 
-		$twixml = "<Message>You just received a text message from $site_name. Read more at $site_url</Message>";
+		$twixml .= "<Message>You just received a text message from $site_name. Read more at $site_url</Message>";
 	}
 
 	return $twixml;
