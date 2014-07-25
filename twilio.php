@@ -2,12 +2,12 @@
 
 /**
  * Plugin Name: Twilio for WordPress
- * Plugin URI: http://marcusbattle.com/plugins/twilio
- * Description: Creates a hook to use in your WordPress plugins to send a text message
+ * Plugin URI: http://marcusbattle.com/plugins/twilio-for-wordpress
+ * Description: Allows developers to extend the Twilio API into WordPress and build exciting communication based themes and plugins. Comes with SMS support to text users from your themes or plugins. VoIP coming soon.
  * Version: 0.1.0
  * Author: Marcus Battle
- * Author URI: http://marcusbattle.com
- * License:. GPL2
+ * Author URI: http://marcusbattle.com/plugins
+ * License: GPLv2 or later
  */
 
 include_once('inc/twilio-php/Services/Twilio.php');
@@ -53,6 +53,7 @@ function twilio_admin_menu() {
 	add_submenu_page( NULL, 'Twilio Developers', 'Twilio Developers', 'manage_options', 'twilio-api', 'twilio_page_api');
 	add_submenu_page( NULL, 'Twilio SMS', 'Twilio SMS', 'manage_options', 'twilio-sms', 'twilio_page_sms');
 	// add_submenu_page( NULL, 'Twilio Voice', 'Twilio Voice', 'manage_options', 'twilio-voice', 'twilio_page_voice');
+	add_submenu_page( NULL, 'Twilio Support', 'Twilio Support', 'manage_options', 'twilio-support', 'twilio_page_support');
 }
 
 add_action( 'admin_menu', 'twilio_admin_menu' );
@@ -63,7 +64,7 @@ add_action( 'admin_menu', 'twilio_admin_menu' );
 * @since 0.1.0
 */
 function twilio_page_settings() {
-	include_once( 'pages/index.php' );
+	include_once( 'pages/settings.php' );
 }
 
 
@@ -95,6 +96,15 @@ function twilio_page_sms() {
 
 
 /**
+* Displays the 'SMS' page in settings
+* @since 0.1.0
+*/
+function twilio_page_support() {
+	include_once( 'pages/support.php' );
+}
+
+
+/**
 * Saves the settings from the options pages for Twilio
 * @since 0.1.0
 */
@@ -122,7 +132,8 @@ add_action( 'init', 'twilio_page_save_settings' );
 
 
 /**
-*
+* Adds a mobil phone field to each user profile
+* @since 0.1.0
 */
 function twilio_user_contactmethods( $user_contact ) {
 
@@ -135,19 +146,107 @@ add_filter('user_contactmethods', 'twilio_user_contactmethods');
 
 
 /**
-*
+* Load the admin scripts to power plugin
 * @since 0.1.0
 */
 function twilio_admin_scripts() {
 
-	echo plugins_url( '/assets/js/ace/lib/ace/ace.js', __FILE__ );
+	wp_register_script( 'twilio', plugins_url( '/assets/js/twilio.admin.js', __FILE__ ), array('jquery'), '', true );
+	wp_enqueue_script( 'twilio' );
 
-	wp_register_script( 'ace-editor', plugins_url( '/assets/js/ace/lib/ace/ace.js', __FILE__ ), '', '', true );
+	wp_register_script( 'ace-editor', plugins_url( '/assets/js/ace/src-min/ace.js', __FILE__ ), '', '' );
 	wp_enqueue_script( 'ace-editor' );
 
 }
 
 add_action( 'admin_enqueue_scripts', 'twilio_admin_scripts' );
+
+
+/**
+* Setups up routing to process the callbacks from Twilio
+* @since 0.1.0
+*/
+function twilio_callbacks() {
+
+	// Parse the uri
+	$uri = parse_url( $_SERVER['REQUEST_URI'] );
+	$uri['path'] = str_replace( home_url( '', 'relative' ) , '', $uri['path'] );
+	$uri['path'] = trailingslashit( $uri['path'] );
+
+	$uri['query'] = isset($uri['query']) ? $uri['query'] : '';
+
+	// Parse the query parameters
+	parse_str( $uri['query'], $sms );
+
+	// Callback for Twilio SMS
+	if ( $uri['path'] == '/twilio/sms/' ) {
+
+		$sms['Body'] = isset($sms['Body']) ? $sms['Body'] : '';
+		$twixml = '';
+
+		// do_action( 'twilio_sms_callback', $query, $twixml );
+		$twixml = apply_filters( 'twilio_sms_callback', $twixml, $sms );
+
+		header("Content-type: text/xml");
+
+		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+		echo "<Response>";
+		echo $twixml;
+		echo "</Response>";
+
+		exit;
+
+	// Callback for Twilio Voice
+	} else if ( $uri['path'] == '/twilio/voice/' ) {
+
+		header("Content-type: text/xml");
+
+		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+		echo "<Response>";
+		echo $twixml;
+		echo "</Response>";
+
+		exit;
+
+	}
+
+}
+
+add_action( 'init', 'twilio_callbacks' );
+	
+
+/**
+* Standard call back that converts SMS replies into a conversation
+* @since 0.1.0
+*/
+function twilio_sms_callback( $twixml, $sms ) {
+
+	return $twixml;
+	
+}
+
+add_filter( 'twilio_sms_callback', 'twilio_sms_callback', 99, 2 );
+
+
+/**
+* Demo response for SMS callback. Activated by texting "DEMO" to Twilio Number
+* @since 0.1.0
+*/
+function twilio_sms_callback_demo( $twixml, $sms ) {
+
+	if ( strtolower($sms['Body']) == 'demo' ) {
+
+		$site_name = get_bloginfo('name');
+		$site_url = home_url();
+
+		$twixml = "<Message>You just received a text message from $site_name. Read more at $site_url</Message>";
+	}
+
+	return $twixml;
+	
+}
+
+add_filter( 'twilio_sms_callback', 'twilio_sms_callback_demo', 98, 2 );
 
 
 ?>
