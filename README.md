@@ -49,7 +49,7 @@ $sms      | array  | The current SMS that has been sent to WordPress. Standard p
 function my_twilio_sms_callback( $twixml, $sms ) {
 
   // Case-insensitive check to see if the SMS only had the word hello in it
-  if ( strtolower($sms['Body']) == 'hello' ) {
+  if ( strcasecmp( $sms['Body'], 'hello' ) == 0 ) {
 
     $twixml .= "<Message>Hey how are you?!</Message>";
 
