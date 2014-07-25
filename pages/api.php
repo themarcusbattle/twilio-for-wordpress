@@ -25,7 +25,7 @@
 	<ul>
 		<li><strong>$to</strong> | string | The mobile number that will be texted. Must be formatted as country code + 10-digit number (i.e. +13362522164).</li>
 		<li><strong>$message</strong> | string | The message that will be sent to the recipient.</li>
-		<li><strong>$from</strong> <i>(optional)</i> | string | Twilio Number message is coming from. Default value is Twilio Number supplied in <a href="?page=twilio">"Settings"</a>.</li>
+		<li><strong>$from</strong> <i>(optional)</i> | string | Twilio Number message is coming from. Must be formatted as country code + 10-digit number. Default value is Twilio Number supplied in <a href="?page=twilio">"Settings"</a>.</li>
 	</ul>
 	<h4>Return</h4>
 	<p>Array | Response from Twilio's servers</p>
