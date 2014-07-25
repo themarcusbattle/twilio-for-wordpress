@@ -189,7 +189,7 @@ function twilio_callbacks() {
 
 		header("Content-type: text/xml");
 
-		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+		echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 		echo "<Response>";
 		echo $twixml;
 		echo "</Response>";
