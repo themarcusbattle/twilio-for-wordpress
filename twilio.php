@@ -273,9 +273,9 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 	$post_length = strlen( $sms['Body'] );
 
 	// Return error message if post is too long
-	if( $post_length >= 160 ) {
+	if ( $post_length >= 140 ) {
 
-		$twixml .= "<Message>Your message is too long ($post_length characters). Please shorten and resend!</Message>";
+		$twixml .= "<Message>Your message is too long ($post_length characters). Please shorten to a max of 140 characters and resend!</Message>";
 		return $twixml;
 
 	}
@@ -292,7 +292,8 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 		$post_args = array(
 			'post_content' => $post_content,
 			'post_status' => 'publish',
-			'post_title' => $post_title
+			'post_title' => $post_title,
+			'tags_input' => array( 'via sms' )
 		);
 
 		$post_id = wp_insert_post( $post_args );
