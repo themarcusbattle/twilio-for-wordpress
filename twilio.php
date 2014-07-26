@@ -292,7 +292,7 @@ function twilio_sms_callback_new_status( $twixml, $sms ) {
 		$post_args = array(
 			'post_content' => ucfirst($post_content),
 			'post_status' => 'publish',
-			'post_name' => $post_title,
+			'post_title' => $post_title,
 			'tags_input' => array( 'via sms' )
 		);
 
