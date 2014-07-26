@@ -246,4 +246,65 @@ function twilio_sms_callback_demo( $twixml, $sms ) {
 add_filter( 'twilio_sms_callback', 'twilio_sms_callback_demo', 98, 2 );
 
 
+/**
+* Callback that allows admins to post via SMS
+* @since 0.1.1
+*/
+function twilio_sms_callback_new_post( $twixml, $sms ) {
+
+	// See if any admin has the supplied mobile phone number
+	$args = array(
+		'role' => 'administrator',
+		'meta_query' => array(
+			array(
+				'key' => 'mobile',
+				'value' => $sms['From'],
+				'compare' => 'LIKE'
+			)
+		)
+	);
+
+	$user = get_users( $args );
+
+	// Define the action we're looking for in the SMS
+	$action = 'new post ';
+	$action_pos = stripos( $sms['Body'], $action );
+
+	// Run function, if our action is present
+	if ( $action_pos === 0 ) {
+
+		$post_content = substr( $sms['Body'], strlen( $action ) );
+		
+		// Create the title with the first 10 words
+		$post_title_parts = array_slice( explode( ' ', $post_content ), 0, 10 );
+		$post_title = implode( ' ', $post_title_parts );
+
+		$post_args = array(
+			'post_content' => $post_content,
+			'post_status' => 'publish',
+			'post_title' => $post_title
+		);
+
+		$post_id = wp_insert_post( $post_args );
+
+		$post_permalink = get_permalink( $post_id );
+
+		if ( $post_id ) {
+
+			set_post_format( $post_id, 'quote' );
+			$twixml .= "<Message>Your post has been posted! $post_permalink. Reply DELETE, to delete post.</Message>";
+
+		} else {
+
+			$twixml .= "<Message>There was a problem creating your post.</Message>";
+
+		}
+	}
+
+	return $twixml;
+	
+}
+
+add_filter( 'twilio_sms_callback', 'twilio_sms_callback_new_post', 98, 2 );
+
 ?>
