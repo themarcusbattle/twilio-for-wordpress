@@ -250,7 +250,7 @@ add_filter( 'twilio_sms_callback', 'twilio_sms_callback_demo', 98, 2 );
 * Callback that allows admins to post via SMS
 * @since 0.1.1
 */
-function twilio_sms_callback_new_post( $twixml, $sms ) {
+function twilio_sms_callback_new_status( $twixml, $sms ) {
 
 	// See if any admin has the supplied mobile phone number
 	$args = array(
@@ -267,7 +267,7 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 	$user = get_users( $args );
 
 	// Define the action we're looking for in the SMS
-	$action = 'new post ';
+	$action = 'status ';
 	$action_pos = stripos( $sms['Body'], $action );
 
 	$post_length = strlen( $sms['Body'] );
@@ -275,7 +275,7 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 	// Return error message if post is too long
 	if ( $post_length >= 140 ) {
 
-		$twixml .= "<Message>Your message is too long ($post_length characters). Please shorten to a max of 140 characters and resend!</Message>";
+		$twixml .= "<Message>Your status is too long ($post_length characters). Please shorten to a max of 140 characters and resend!</Message>";
 		return $twixml;
 
 	}
@@ -292,22 +292,23 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 		$post_args = array(
 			'post_content' => $post_content,
 			'post_status' => 'publish',
-			'post_title' => $post_title,
+			'post_name' => $post_title,
 			'tags_input' => array( 'via sms' )
 		);
 
 		$post_id = wp_insert_post( $post_args );
 
-		$post_permalink = get_permalink( $post_id );
+		$post_permalink = untrailingslashit(get_permalink( $post_id ));
 
 		if ( $post_id ) {
 
-			set_post_format( $post_id, 'quote' );
-			$twixml .= "<Message>Your post has been posted! $post_permalink. Reply DELETE, to delete post.</Message>";
+			set_post_format( $post_id, 'status' );
+
+			$twixml .= "<Message>Your status has been posted! $post_permalink. Reply DELETE, to delete status.</Message>";
 
 		} else {
 
-			$twixml .= "<Message>There was a problem creating your post.</Message>";
+			$twixml .= "<Message>There was a problem posting your status.</Message>";
 
 		}
 	}
@@ -316,6 +317,6 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 	
 }
 
-add_filter( 'twilio_sms_callback', 'twilio_sms_callback_new_post', 98, 2 );
+add_filter( 'twilio_sms_callback', 'twilio_sms_callback_new_status', 98, 2 );
 
 ?>
