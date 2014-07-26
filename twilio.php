@@ -270,7 +270,17 @@ function twilio_sms_callback_new_post( $twixml, $sms ) {
 	$action = 'new post ';
 	$action_pos = stripos( $sms['Body'], $action );
 
-	// Run function, if our action is present
+	$post_length = strlen( $sms['Body'] );
+
+	// Return error message if post is too long
+	if( $post_length >= 160 ) {
+
+		$twixml .= "<Message>Your message is too long ($post_length characters). Please shorten and resend!</Message>";
+		return $twixml;
+
+	}
+	
+	// Run function, if our action is present and post is the correct length
 	if ( $action_pos === 0 ) {
 
 		$post_content = substr( $sms['Body'], strlen( $action ) );
