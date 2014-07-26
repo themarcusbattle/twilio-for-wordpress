@@ -283,14 +283,14 @@ function twilio_sms_callback_new_status( $twixml, $sms ) {
 	// Run function, if our action is present and post is the correct length
 	if ( $action_pos === 0 ) {
 
-		$post_content = ucfirst( substr( $sms['Body'], strlen( $action ) ) );
+		$post_content = substr( $sms['Body'], strlen( $action ) );
 		
 		// Create the title with the first 10 words
 		$post_title_parts = array_slice( explode( ' ', $post_content ), 0, 10 );
 		$post_title = implode( ' ', $post_title_parts );
 
 		$post_args = array(
-			'post_content' => $post_content,
+			'post_content' => ucfirst($post_content),
 			'post_status' => 'publish',
 			'post_name' => $post_title,
 			'tags_input' => array( 'via sms' )
