@@ -329,7 +329,7 @@ function twilio_sms_callback_new_status( $twixml, $sms ) {
 		$post_args = array(
 			'post_content' => ucfirst($post_content),
 			'post_status' => 'publish',
-			'post_title' => $post_title,
+			'post_title' => ucfirst($post_title),
 			'tags_input' => $tags_array
 		);
 
