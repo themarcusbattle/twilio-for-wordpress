@@ -283,17 +283,54 @@ function twilio_sms_callback_new_status( $twixml, $sms ) {
 	// Run function, if our action is present and post is the correct length
 	if ( $action_pos === 0 ) {
 
+		// Get content for our actual post
 		$post_content = substr( $sms['Body'], strlen( $action ) );
-		
+
 		// Create the title with the first 10 words
 		$post_title_parts = array_slice( explode( ' ', $post_content ), 0, 10 );
 		$post_title = implode( ' ', $post_title_parts );
 
+		// Find hashtags in status
+		preg_match_all("/(#\w+)/u", $post_content, $hashtag_matches );
+		
+		$tags_array = array( 'via sms' );
+
+		if ( $hashtag_matches ) {
+
+			foreach ( $hashtag_matches[0] as $key => $hashtag ) {
+
+				$new_term = str_replace( '#', '', $hashtag );
+
+				$new_tag = wp_insert_term( $new_term, 'post_tag' );
+
+				// Get tag ID
+				if ( is_wp_error($new_tag) ) {
+
+					$tag_id = $new_tag->error_data['term_exists'];
+
+				} else {
+					
+					$tag_id = $new_tag['term_id'];
+
+				}
+
+				// Get tag permalink
+				$new_tag_permalink = get_tag_link( $tag_id );
+
+				$post_content = str_replace( $hashtag, "<a href=\"$new_tag_permalink\">$hashtag</a>", $post_content );
+
+				array_push( $tags_array, $new_term );
+
+			}
+
+		}
+
+		// Create new post array
 		$post_args = array(
 			'post_content' => ucfirst($post_content),
 			'post_status' => 'publish',
 			'post_title' => $post_title,
-			'tags_input' => array( 'via sms' )
+			'tags_input' => $tags_array
 		);
 
 		$post_id = wp_insert_post( $post_args );
