@@ -10,7 +10,8 @@
  * License: GPLv2 or later
  */
 
-include_once('inc/twilio-php/Services/Twilio.php');
+include_once('includes/twilio-php/Services/Twilio.php');
+include_once('includes/activation.php');
 
 /**
 * Sends a standard text message to the supplied phone number
@@ -168,16 +169,27 @@ add_action( 'admin_enqueue_scripts', 'twilio_admin_scripts' );
 */
 function twilio_callbacks() {
 
-	// Parse the uri
-	$uri = parse_url( $_SERVER['REQUEST_URI'] );
-	$uri['path'] = str_replace( home_url( '', 'relative' ) , '', $uri['path'] );
-	$uri['path'] = trailingslashit( $uri['path'] );
-
 	$sms = $_REQUEST;
+	
+	if ( is_twilio() ) {
+
+		// Define subscriber
+		$subscriber = array(
+			'mobile_number' => twilio_format_number($sms['From']),
+			'mobile_city' => isset($sms['FromCity']) ? $sms['FromCity'] : '',
+			'mobile_state' => isset($sms['FromState']) ? $sms['FromState'] : '',
+			'mobile_zip' => isset($sms['FromZip']) ? $sms['FromZip'] : '',
+			'mobile_country' => isset($sms['FromCountry']) ? $sms['FromCountry'] : ''
+		);
+
+		// Add subscriber 
+		$subscriber_id = twilio_add_subscriber( $subscriber );
+
+	}
 
 	// Callback for Twilio SMS
-	if ( $uri['path'] == '/twilio/sms/' ) {
-
+	if ( is_twilio_sms() ) {
+		
 		$sms['Body'] = isset($sms['Body']) ? $sms['Body'] : '';
 		$twixml = '';
 
@@ -194,7 +206,7 @@ function twilio_callbacks() {
 		exit;
 
 	// Callback for Twilio Voice
-	} else if ( $uri['path'] == '/twilio/voice/' ) {
+	} else if ( is_twilio_voice() ) {
 
 		header("Content-type: text/xml");
 
@@ -210,7 +222,60 @@ function twilio_callbacks() {
 }
 
 add_action( 'init', 'twilio_callbacks' );
+
+/**
+* Checks to see if Twilio was called
+* @since 0.1.1
+*/	
+function is_twilio() {
+
+	// Parse the uri, remove the site path if any and remove leading slash
+	$uri = parse_url( $_SERVER['REQUEST_URI'] );
+	$uri_path = str_replace( home_url( '', 'relative' ) , '', $uri['path'] );
+	$uri_path = ltrim( $uri_path,'/' );
+
+	$twilio_request = explode( '/', $uri_path );
 	
+	if ( $twilio_request && $twilio_request[0] == 'twilio' ) 
+		return $twilio_request;
+	else
+		return false;
+
+}
+
+/**
+* Checks to see if Twilio request was for SMS
+* @since 0.1.1
+*/
+function is_twilio_sms() {
+
+	if ( $twilio_request = is_twilio() ) {
+
+		if ( isset($twilio_request[1]) && $twilio_request[1] == 'sms' )
+			return true;
+		else
+			return false;
+
+	}
+
+}
+
+/**
+* Checks to see if Twilio request was for Voice 
+* @since 0.1.1
+*/
+function is_twilio_voice() {
+
+	if ( $twilio_request = is_twilio() ) {
+
+		if ( isset($twilio_request[1]) && $twilio_request[1] == 'voice' )
+			return true;
+		else
+			return false;
+		
+	}
+
+}
 
 /**
 * Standard call back that converts SMS replies into a conversation
@@ -245,5 +310,64 @@ function twilio_sms_callback_demo( $twixml, $sms ) {
 
 add_filter( 'twilio_sms_callback', 'twilio_sms_callback_demo', 98, 2 );
 
+/**
+* Adds a new Twilio subscriber 
+* @since 0.1.1
+*/
+function twilio_add_subscriber( $subscriber ) {
 
-?>
+	global $wpdb;
+
+	if ( !$subscriber_id = twilio_subscriber_exists( $subscriber['mobile_number'] ) ) {
+
+		$subscribers_table = $wpdb->prefix . "twilio_subscribers";
+
+		$subscriber_id = $wpdb->insert(
+			$subscribers_table,
+			$subscriber
+		);
+
+		return $subscriber_id;
+
+	}
+
+	return false;
+
+}
+
+/**
+* Checks to see if mobile number is already subscriberd 
+* @since 0.1.1
+*/
+function twilio_subscriber_exists( $mobile_number ) {
+
+	global $wpdb;
+
+	$mobile_number = twilio_format_number( $mobile_number );
+
+	$subscribers_table = $wpdb->prefix . "twilio_subscribers";
+
+	$subscriber = $wpdb->get_row("SELECT * FROM $subscribers_table WHERE mobile_number = '$mobile_number'");
+
+	return $subscriber;
+
+}
+
+/**
+* Converts mobile number to E.164
+* @since 0.1.1
+*/
+function twilio_format_number( $mobile_number, $format = 'E.164' ) {
+
+	if ( $format == 'E.164' ) {
+		
+		$mobile_number = trim(str_replace( array('(',')','-'), '', $mobile_number ));
+
+		if ( stripos( $mobile_number, '+' ) !== 0 )
+			$mobile_number = '+' . $mobile_number;
+
+	}
+
+	return $mobile_number;
+
+}
